@@ -217,16 +217,16 @@ export default function DatabaseClient({ reviews }: Props) {
         </div>
       </div>
 
-      {/* Masonry Grid */}
+      {/* Masonry Grid - Adapted for horizontal cards on mobile */}
       <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
         {filtered.map((drink) => (
           <div
             key={drink.id}
-            className="break-inside-avoid halftone-bg comic-border comic-shadow relative group cursor-pointer hover:-translate-y-1 hover:translate-x-1 transition-transform"
+            className="break-inside-avoid halftone-bg comic-border comic-shadow relative group cursor-pointer hover:-translate-y-1 hover:translate-x-1 transition-transform flex flex-row md:flex-col"
             onClick={() => setSelectedDrink(drink)}
           >
             {/* Rating starburst */}
-            <div className="absolute -top-4 -right-4 z-10">
+            <div className="absolute -top-3 -right-3 md:-top-4 md:-right-4 z-10 scale-75 md:scale-100">
               <StarburstBadge
                 value={drink.rating.toFixed(1)}
                 color={getRatingColor(drink.rating)}
@@ -237,46 +237,48 @@ export default function DatabaseClient({ reviews }: Props) {
             </div>
 
             {/* Image */}
-            <div className="relative w-full h-56 overflow-hidden comic-border m-0 grayscale group-hover:grayscale-0 transition-all duration-500">
+            <div className="relative w-28 h-auto min-h-[140px] md:w-full md:h-56 overflow-hidden comic-border m-0 grayscale group-hover:grayscale-0 transition-all duration-500 flex-shrink-0">
               <Image
                 src={`/images/reviews/${drink.image_filename}`}
                 alt={drink.official_name}
                 fill
                 className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="(max-width: 768px) 200px, (max-width: 1200px) 50vw, 33vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
 
-            <div className="p-4">
-              {/* Name banner */}
-              <h2
-                className="font-bangers text-2xl -rotate-1 text-white px-3 py-1 inline-block mb-3 comic-border"
-                style={{ background: BRAND_COLORS[drink.brand] || '#1b1b1b', color: BRAND_COLORS[drink.brand] ? '#1b1b1b' : '#fff' }}
-              >
-                {drink.official_name}
-              </h2>
+            <div className="p-3 md:p-4 flex-1 flex flex-col justify-between overflow-hidden">
+              <div>
+                {/* Name banner */}
+                <h2
+                  className="font-bangers text-xl md:text-2xl -rotate-1 text-white px-2 py-1 inline-block mb-2 md:mb-3 comic-border truncate max-w-full"
+                  style={{ background: BRAND_COLORS[drink.brand] || '#1b1b1b', color: BRAND_COLORS[drink.brand] ? '#1b1b1b' : '#fff' }}
+                >
+                  {drink.official_name}
+                </h2>
 
-              {/* Speech bubble review */}
-              <div className="speech-bubble p-3 mb-4">
-                <p className="font-vietnam text-sm font-bold text-black line-clamp-3">
-                  &ldquo;{drink.review_text}&rdquo;
-                </p>
+                {/* Speech bubble review */}
+                <div className="speech-bubble p-2 md:p-3 mb-2 md:mb-4">
+                  <p className="font-vietnam text-xs md:text-sm font-bold text-black line-clamp-2 md:line-clamp-3">
+                    &ldquo;{drink.review_text}&rdquo;
+                  </p>
+                </div>
               </div>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                <span className="px-2 py-1 bg-[#e8e8e8] comic-border font-bangers text-xs tracking-wider">
+              <div className="flex flex-wrap gap-1 md:gap-2 mt-2">
+                <span className="px-2 py-0.5 bg-[#e8e8e8] comic-border font-bangers text-[10px] md:text-xs tracking-wider">
                   {drink.primary_flavor_category?.toUpperCase()}
                 </span>
                 {drink.sugar_free && (
-                  <span className="px-2 py-1 bg-[#00fbfb] comic-border font-bangers text-xs tracking-wider">
+                  <span className="px-2 py-0.5 bg-[#00fbfb] comic-border font-bangers text-[10px] md:text-xs tracking-wider">
                     SUGAR-FREE
                   </span>
                 )}
                 {drink.caffeine_amount_mg > 0 && (
-                  <span className="px-2 py-1 bg-[#ffd7f5] comic-border font-bangers text-xs tracking-wider">
-                    {drink.caffeine_amount_mg}MG CAFF
+                  <span className="px-2 py-0.5 bg-[#ffd7f5] comic-border font-bangers text-[10px] md:text-xs tracking-wider">
+                    {drink.caffeine_amount_mg}MG
                   </span>
                 )}
               </div>
@@ -304,7 +306,7 @@ export default function DatabaseClient({ reviews }: Props) {
           >
             <button
               onClick={() => setSelectedDrink(null)}
-              className="absolute top-4 right-4 font-bangers text-2xl bg-[#ba1a1a] text-white comic-border w-10 h-10 flex items-center justify-center comic-btn"
+              className="absolute top-4 right-4 font-bangers text-2xl bg-[#ba1a1a] text-white comic-border w-10 h-10 flex items-center justify-center comic-btn z-50"
             >
               ✕
             </button>
