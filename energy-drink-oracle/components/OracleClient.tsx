@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Review, ModelWeights, UntriedDrink, PredictorInputs } from '@/lib/types';
 import { predict, findSimilar, getVerdict } from '@/lib/predictor';
@@ -38,6 +38,7 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
   const [inputs, setInputs] = useState<PredictorInputs>(DEFAULT_INPUTS);
   const [result, setResult] = useState<{ rating: number; similar: Review[] } | null>(null);
   const [predicting, setPredicting] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const handleUntriedSelect = (id: string) => {
     setSelectedUntriedId(id);
@@ -66,6 +67,13 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
       const similar = findSimilar(inputs, reviews, 3);
       setResult({ rating, similar });
       setPredicting(false);
+      
+      // Auto-scroll to results on mobile
+      if (window.innerWidth < 768) {
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
     }, 600); // brief delay for dramatic effect
   }, [inputs, weights, reviews]);
 
@@ -74,15 +82,15 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
   return (
     <>
       {/* Header */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-6 md:mb-12">
         <h1
-          className="font-bangers text-7xl md:text-8xl tracking-wider -rotate-2 inline-block mb-4"
-          style={{ color: '#fe00fe', WebkitTextStroke: '3px #1b1b1b', textShadow: '8px 8px 0px #1b1b1b' }}
+          className="font-bangers text-5xl md:text-8xl tracking-wider -rotate-2 inline-block mb-4"
+          style={{ color: '#fe00fe', WebkitTextStroke: '2px #1b1b1b', textShadow: '4px 4px 0px #1b1b1b' }}
         >
           THE ORACLE
         </h1>
-        <div className="bg-[#00fbfb] comic-border comic-shadow p-4 max-w-xl mx-auto">
-          <p className="font-vietnam text-lg font-bold text-black">
+        <div className="bg-[#00fbfb] comic-border comic-shadow p-3 md:p-4 max-w-xl mx-auto">
+          <p className="font-vietnam text-sm md:text-lg font-bold text-black">
             Pick a drink you haven&apos;t tried — or dial in the taste profile manually.
             The Oracle will predict whether <strong className="text-[#006a6a]">Abid would love it</strong> or{' '}
             <strong className="text-[#ba1a1a]">leave it on the shelf</strong>.
@@ -90,9 +98,9 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {/* ===== LEFT: INPUTS ===== */}
-        <div className="bg-white comic-border comic-shadow p-6 flex flex-col gap-6">
+        <div className="bg-white comic-border comic-shadow p-4 md:p-6 flex flex-col gap-4 md:gap-6">
 
           {/* Tabs */}
           <div className="flex gap-3">
@@ -189,9 +197,9 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
               {SLIDER_FIELDS.map(({ key, label }) => (
                 <div key={key} className="flex flex-col gap-1">
                   <div className="flex justify-between items-center">
-                    <label className="font-bangers text-lg tracking-wider">{label}</label>
+                    <label className="font-bangers text-base md:text-lg tracking-wider">{label}</label>
                     <span
-                      className="font-bangers text-xl px-2 py-0.5 comic-border"
+                      className="font-bangers text-lg md:text-xl px-2 py-0.5 comic-border"
                       style={{ background: '#eaea00', minWidth: 32, textAlign: 'center' }}
                     >
                       {inputs[key as keyof typeof inputs] as number}
@@ -201,9 +209,9 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
                     type="range" min={1} max={5} step={1}
                     value={inputs[key as keyof typeof inputs] as number}
                     onChange={e => setInputs(v => ({ ...v, [key]: Number(e.target.value) }))}
-                    className="w-full"
+                    className="w-full h-2 md:h-auto"
                   />
-                  <div className="flex justify-between font-bangers text-xs text-[#6a7a7a]">
+                  <div className="hidden md:flex justify-between font-bangers text-xs text-[#6a7a7a]">
                     <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                   </div>
                 </div>
@@ -222,7 +230,10 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
         </div>
 
         {/* ===== RIGHT: RESULTS ===== */}
-        <div className="bg-[#f3f3f3] comic-border comic-shadow p-6 flex flex-col items-center justify-center min-h-[500px] relative overflow-hidden">
+        <div 
+          ref={resultsRef}
+          className="bg-[#f3f3f3] comic-border comic-shadow p-4 md:p-6 flex flex-col items-center justify-center min-h-[300px] md:min-h-[500px] relative overflow-hidden"
+        >
 
           {/* Halftone dots decoration */}
           <div className="absolute inset-0 halftone-bg-yellow opacity-30 pointer-events-none" />
@@ -248,53 +259,51 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
             <div className="text-center relative z-10 w-full bam-animate">
               {/* Big score display — clean card, no clipping starburst */}
               <div
-                className="comic-border inline-flex flex-col items-center justify-center px-10 py-6 mb-4 -rotate-2"
+                className="comic-border inline-flex flex-col items-center justify-center px-6 py-4 md:px-10 md:py-6 mb-4 -rotate-2 shadow-[6px_6px_0px_0px_#1b1b1b] md:shadow-[10px_10px_0px_0px_#1b1b1b]"
                 style={{
                   background: verdict.bg,
                   color: verdict.color,
-                  boxShadow: '10px 10px 0px 0px #1b1b1b',
-                  minWidth: 200,
+                  minWidth: 160,
                 }}
               >
-                <span className="font-bangers text-2xl tracking-widest leading-none opacity-80">
+                <span className="font-bangers text-xl md:text-2xl tracking-widest leading-none opacity-80">
                   {verdict.exclaim}
                 </span>
-                <span className="font-bangers leading-none" style={{ fontSize: '4.5rem', lineHeight: 1 }}>
+                <span className="font-bangers leading-none text-5xl md:text-7xl" style={{ lineHeight: 1 }}>
                   {result.rating.toFixed(1)}
                 </span>
-                <span className="font-bangers text-lg tracking-widest leading-none">
+                <span className="font-bangers text-base md:text-lg tracking-widest leading-none">
                   OUT OF 10
                 </span>
               </div>
 
               <div
-                className="font-bangers text-3xl tracking-wider comic-border px-4 py-2 inline-block mb-4 block"
+                className="font-bangers text-xl md:text-3xl tracking-wider comic-border px-3 py-1.5 md:px-4 md:py-2 inline-block mb-4 block"
                 style={{ background: verdict.bg, color: verdict.color }}
               >
-                {verdict.label} — {result.rating >= 7 ? 'Abid would drink this.' : result.rating >= 5 ? 'Maybe on a slow day.' : 'Hard pass.'}
+                {verdict.label} — <span className="text-sm md:text-xl">{result.rating >= 7 ? 'Abid would drink this.' : result.rating >= 5 ? 'Maybe on a slow day.' : 'Hard pass.'}</span>
               </div>
 
               {/* Similar drinks */}
               {result.similar.length > 0 && (
-                <div className="mt-6 text-left">
-                  <div className="font-bangers text-xl tracking-wider mb-3 text-[#1b1b1b]">CLOSEST TO DRINKS ABID HAS TRIED:</div>
-                  <div className="flex flex-col gap-3">
+                <div className="mt-4 md:mt-6 text-left w-full">
+                  <div className="font-bangers text-lg md:text-xl tracking-wider mb-2 md:mb-3 text-[#1b1b1b]">CLOSEST TO DRINKS ABID HAS TRIED:</div>
+                  <div className="flex flex-col gap-2 md:gap-3">
                     {result.similar.map(s => (
-                      <div key={s.id} className="bg-white comic-border comic-shadow-sm p-3 flex items-center gap-3">
-                        <div className="relative w-12 h-12 shrink-0 comic-border overflow-hidden">
+                      <div key={s.id} className="bg-white comic-border comic-shadow-sm p-2 md:p-3 flex items-center gap-2 md:gap-3">
+                        <div className="relative w-10 h-10 md:w-12 md:h-12 shrink-0 comic-border overflow-hidden">
                           <Image src={`/images/reviews/${s.image_filename}`} alt={s.official_name} fill className="object-cover" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="font-bangers text-base tracking-wider leading-tight truncate">{s.official_name}</div>
-                          <div className="font-vietnam text-xs text-[#6a7a7a]">{s.brand} • Rated {s.rating}/10</div>
+                          <div className="font-bangers text-sm md:text-base tracking-wider leading-tight truncate">{s.official_name}</div>
+                          <div className="font-vietnam text-[10px] md:text-xs text-[#6a7a7a]">{s.brand} • Rated {s.rating}/10</div>
                         </div>
                         {/* Plain pill badge — no clip-path clipping */}
                         <div
-                          className="font-bangers text-sm px-3 py-1 comic-border shrink-0"
+                          className="font-bangers text-xs md:text-sm px-2 md:px-3 py-0.5 md:py-1 comic-border shrink-0 shadow-[2px_2px_0_0_#1b1b1b] md:shadow-[3px_3px_0_0_#1b1b1b]"
                           style={{
                             background: s.rating >= 8 ? '#eaea00' : s.rating >= 6 ? '#ffd7f5' : '#ba1a1a',
                             color: s.rating < 5 ? '#fff' : '#1b1b1b',
-                            boxShadow: '3px 3px 0 #1b1b1b',
                           }}
                         >
                           {s.rating.toFixed(1)}
