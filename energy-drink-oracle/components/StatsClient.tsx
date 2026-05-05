@@ -220,7 +220,7 @@ export default function StatsClient({ reviews: r }: Props) {
                 <YAxis
                   domain={[0, 100]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tickFormatter={(v: number) => `${v}`}
+                  tickFormatter={(v: any) => `${v}`}
                   tick={{ fontFamily: 'Bangers', fontSize: 12, fill: '#b9cac9' }}
                   axisLine={{ stroke: '#b9cac9' }}
                   tickLine={false}
@@ -264,7 +264,7 @@ export default function StatsClient({ reviews: r }: Props) {
               <YAxis allowDecimals={false} tick={{ fontFamily: 'Bangers', fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{ fontFamily: 'Bangers', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', boxShadow: '6px 6px 0 #1b1b1b', letterSpacing: 1 }}
-                formatter={(v: number) => [`${v} drink${v !== 1 ? 's' : ''}`, 'Count']}
+                formatter={(v: any) => [`${v} drink${v !== 1 ? 's' : ''}`, 'Count']}
               />
               <Bar dataKey="count" stroke="#1b1b1b" strokeWidth={2} radius={0}>
                 {histData.map((d, i) => (
@@ -315,7 +315,7 @@ export default function StatsClient({ reviews: r }: Props) {
               <Tooltip
                 cursor={{ strokeDasharray: '4 4' }}
                 contentStyle={{ fontFamily: 'Be Vietnam Pro', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', boxShadow: '6px 6px 0 #1b1b1b', fontSize: 12 }}
-                formatter={(_: unknown, name: string, props: { payload?: { name: string; y: number; x: number } }) => {
+                formatter={(_: any, name: any, props: any) => {
                   if (name === 'y') return [`${props.payload?.y}/10`, 'Rating'];
                   if (name === 'x') return [props.payload?.x, 'Refreshing'];
                   return [props.payload?.name, 'Drink'];

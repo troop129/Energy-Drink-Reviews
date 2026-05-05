@@ -62,7 +62,7 @@ export function findSimilar(inputs: PredictorInputs, reviews: import('./types').
     'artificial_sweetener_taste', 'smoothness', 'refreshing_score'
   ] as const;
 
-  const inputVec = numericKeys.map(k => (inputs as Record<string, number>)[k] ?? 3);
+  const inputVec = numericKeys.map(k => (inputs[k as keyof PredictorInputs] as number) ?? 3);
 
   const scored = reviews
     .filter(r => r.rating > 0)
