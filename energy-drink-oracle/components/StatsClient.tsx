@@ -31,18 +31,28 @@ function ComicBuilding(props: BuildingProps): ReactElement {
   if (height <= 0 || width <= 0) return <g />;
 
   const border = 2;
-  const winCols = 4;
-  const winRows = Math.max(1, Math.floor(height / 20));
-  const winW = Math.max(4, (width - border * 2 - winCols * 4) / winCols);
-  const winH = Math.max(4, (height - 24 - border * 2 - winRows * 4) / winRows);
+  // Dynamically calculate columns based on width. 
+  let winCols = 4;
+  if (width < 35) winCols = 1;
+  else if (width < 60) winCols = 2;
+  else if (width < 90) winCols = 3;
+
+  const winRows = Math.max(1, Math.floor(height / 22));
+  
+  // Calculate window size with padding
+  const totalPaddingX = border * 2 + (winCols + 1) * 2;
+  const winW = Math.max(2, (width - totalPaddingX) / winCols);
+  
+  const totalPaddingY = 28 + border * 2 + (winRows + 1) * 2;
+  const winH = Math.max(2, (height - totalPaddingY) / winRows);
 
   const windows: { wx: number; wy: number; lit: boolean; isTried: boolean }[] = [];
   let idx = 0;
   for (let r = 0; r < winRows; r++) {
     for (let c = 0; c < winCols; c++) {
       windows.push({
-        wx: x + border + c * (winW + 4) + 2,
-        wy: y + border + 8 + r * (winH + 4) + 4,
+        wx: x + border + 2 + c * (winW + 2),
+        wy: y + border + 14 + r * (winH + 2),
         lit: idx < liked,
         isTried: idx < total,
       });
@@ -53,17 +63,24 @@ function ComicBuilding(props: BuildingProps): ReactElement {
   return (
     <g>
       {/* Building body */}
-      <rect x={x + 1} y={y + 1} width={width - 2} height={height - 2} fill={fill} />
+      <rect x={x + 1} y={y + 1} width={Math.max(0, width - 2)} height={Math.max(0, height - 2)} fill={fill} />
+      
+      {/* Comic Shading (side shadow) */}
+      <rect x={x + width - 6} y={y + 8} width={4} height={height - 8} fill="#000" opacity={0.15} />
+
       {/* Roof line */}
       <rect x={x} y={y} width={width} height={8} fill="#1b1b1b" />
+      <rect x={x + 4} y={y - 4} width={width - 8} height={4} fill="#1b1b1b" /> {/* Extra roof detail */}
+      
       {/* Outer border */}
       <rect x={x} y={y} width={width} height={height} fill="none" stroke="#1b1b1b" strokeWidth={border} />
+      
       {/* Windows: yellow=liked, dark=tried-not-liked, very-dark=extra-filler */}
       {windows.map((w, i) => (
         <rect
           key={i}
           x={w.wx} y={w.wy}
-          width={Math.max(2, winW)} height={Math.max(2, winH)}
+          width={Math.max(1, winW)} height={Math.max(1, winH)}
           fill={w.lit ? '#eaea00' : '#1b1b1b'}
           opacity={w.lit ? 1 : w.isTried ? 0.22 : 0.05}
           stroke="#1b1b1b" strokeWidth={0.5}
@@ -161,31 +178,42 @@ export default function StatsClient({ reviews: r }: Props) {
   return (
     <>
       {/* Header */}
-      <header className="mb-10 bg-[#00fbfb] comic-border comic-shadow p-8 relative overflow-visible">
-        <h1 className="font-bangers text-6xl md:text-7xl text-[#1b1b1b] -rotate-2 inline-block bg-white px-4 py-2 comic-border comic-shadow-sm tracking-wider">
+      <header className="mb-6 md:mb-10 bg-[#00fbfb] comic-border comic-shadow p-6 md:p-8 relative overflow-visible">
+        <h1 className="font-bangers text-5xl md:text-7xl text-[#1b1b1b] md:-rotate-2 inline-block bg-white px-4 py-2 comic-border comic-shadow-sm tracking-wider">
           ABID&apos;S STATS LAB
         </h1>
-        <p className="font-vietnam text-lg text-[#3a4a49] mt-4 bg-white p-3 comic-border inline-block">
-          Breaking down the data behind every sip. <strong>38 drinks reviewed.</strong>
-        </p>
+        <div className="block">
+          <p className="font-vietnam text-base md:text-lg text-[#3a4a49] mt-4 bg-white p-3 comic-border inline-block">
+            Breaking down the data behind every sip. <strong>38 drinks reviewed.</strong>
+          </p>
+        </div>
       </header>
 
+      {/* Quick Navigation - Mobile Only */}
+      <div className="flex md:hidden overflow-x-auto gap-2 mb-6 pb-2 hide-scrollbar font-bangers tracking-wider">
+        <a href="#cityscape" className="bg-white border-2 border-black px-3 py-1 whitespace-nowrap">Cityscape</a>
+        <a href="#taste" className="bg-white border-2 border-black px-3 py-1 whitespace-nowrap">Taste</a>
+        <a href="#scatter" className="bg-white border-2 border-black px-3 py-1 whitespace-nowrap">Scatter</a>
+        <a href="#flavors" className="bg-white border-2 border-black px-3 py-1 whitespace-nowrap">Flavors</a>
+        <a href="#comparisons" className="bg-white border-2 border-black px-3 py-1 whitespace-nowrap">Head-to-Head</a>
+      </div>
+
       {/* ——— STAT CARDS ——— */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-10">
         {[
-          { label: 'BEST DRINK', val: topDrink.official_name.split(' ').slice(0, 3).join(' '), sub: `${topDrink.rating}/10`, bg: '#00fbfb' },
-          { label: 'WORST DRINK', val: worstDrink.official_name.split(' ').slice(0, 3).join(' '), sub: `${worstDrink.rating}/10`, bg: '#ba1a1a', tc: '#fff' },
+          { label: 'BEST DRINK', val: topDrink.official_name.split(' ').slice(0, 2).join(' '), sub: `${topDrink.rating}/10`, bg: '#00fbfb' },
+          { label: 'WORST DRINK', val: worstDrink.official_name.split(' ').slice(0, 2).join(' '), sub: `${worstDrink.rating}/10`, bg: '#ba1a1a', tc: '#fff' },
           { label: 'AVG RATING', val: overallAvg.toFixed(1), sub: 'across all 38', bg: '#eaea00' },
-          { label: 'WOULD DRINK AGAIN', val: `${likedCount}`, sub: `rated 7+ (${Math.round(likedCount/r.length*100)}%)`, bg: '#b7e4c7' },
+          { label: 'WOULD DRINK AGAIN', val: `${likedCount}`, sub: `${Math.round(likedCount/r.length*100)}% liked`, bg: '#b7e4c7' },
           { label: 'SUGAR-FREE', val: `${sugarFreeCount}`, sub: 'drinks tried', bg: '#ffd7f5' },
           { label: 'HIGH CAFFEINE', val: `${highCaffCount}`, sub: '150mg+ tried', bg: '#fe00fe', tc: '#fff' },
         ].map((s, i) => (
           <div key={i}
-            className="comic-border comic-shadow p-4 relative flex flex-col items-center text-center"
+            className="comic-border comic-shadow p-3 md:p-4 relative flex flex-col items-center text-center justify-center min-h-[100px]"
             style={{ background: s.bg, color: s.tc || '#1b1b1b' }}>
-            <div className="font-bangers text-xs tracking-widest mb-1 opacity-70 leading-tight">{s.label}</div>
-            <div className="font-bangers text-2xl leading-tight mb-1">{s.val}</div>
-            <div className="font-vietnam text-xs leading-tight">{s.sub}</div>
+            <div className="font-bangers text-[10px] md:text-xs tracking-widest mb-1 opacity-70 leading-tight uppercase">{s.label}</div>
+            <div className="font-bangers text-xl md:text-2xl leading-tight mb-1">{s.val}</div>
+            <div className="font-vietnam text-[10px] md:text-xs leading-tight opacity-90">{s.sub}</div>
           </div>
         ))}
       </div>
@@ -193,75 +221,92 @@ export default function StatsClient({ reviews: r }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
 
         {/* ——— COMIC CITYSCAPE ——— */}
-        <section className="md:col-span-8 bg-[#1b1b1b] comic-border comic-shadow p-6 relative overflow-hidden">
-          {/* Night sky halftone bg */}
+        <section id="cityscape" className="md:col-span-8 bg-[#1b1b1b] comic-border comic-shadow p-4 md:p-6 relative overflow-hidden">
+          {/* Night sky skyline effect */}
+          <div className="absolute inset-0 opacity-30" style={{
+            background: 'linear-gradient(to top, #002020 0%, #1b1b1b 100%)',
+          }} />
           <div className="absolute inset-0 opacity-20" style={{
             backgroundImage: 'radial-gradient(#ffffff 0.6px, transparent 0.6px)',
-            backgroundSize: '10px 10px',
+            backgroundSize: '12px 12px',
           }} />
-          <h2 className="font-bangers text-3xl -rotate-1 inline-block bg-[#eaea00] px-3 py-1 comic-border mb-2 tracking-wider relative z-10">
+          
+          <h2 className="font-bangers text-2xl md:text-3xl -rotate-1 inline-block bg-[#eaea00] px-3 py-1 comic-border mb-2 tracking-wider relative z-10">
             BRAND CITYSCAPE
           </h2>
-          <p className="font-vietnam text-xs text-[#b9cac9] mb-4 relative z-10">
-            Building height = drinks tried · Yellow windows = liked (7+) · Dark windows = tried but meh
+          <p className="font-vietnam text-[10px] md:text-xs text-[#b9cac9] mb-4 relative z-10">
+            Building height = drinks tried · Yellow windows = liked (7+) · Dark = meh
           </p>
-          <div className="relative z-10">
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={brandData} margin={{ top: 10, right: 20, left: 0, bottom: 65 }}>
-                <XAxis
-                  dataKey="brand"
-                  angle={-38}
-                  textAnchor="end"
-                  tick={{ fontFamily: 'Bangers', fontSize: 12, letterSpacing: 1, fill: '#eaea00' }}
-                  interval={0}
-                  axisLine={{ stroke: '#eaea00' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  ticks={[0, 25, 50, 75, 100]}
-                  tickFormatter={(v: any) => `${v}`}
-                  tick={{ fontFamily: 'Bangers', fontSize: 12, fill: '#b9cac9' }}
-                  axisLine={{ stroke: '#b9cac9' }}
-                  tickLine={false}
-                  label={{ value: 'drinks tried →', angle: -90, position: 'insideLeft', fill: '#b9cac9', fontFamily: 'Bangers', fontSize: 12, dy: 45 }}
-                />
-                <Tooltip content={<CityTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
-                <Bar
-                  dataKey="heightVal"
-                  shape={(shapeProps: BuildingProps) => {
-                    const entry = brandData[shapeProps.index ?? 0];
-                    return (
-                      <ComicBuilding
-                        {...shapeProps}
-                        fill={BRAND_COLORS[(shapeProps.index ?? 0) % BRAND_COLORS.length]}
-                        liked={entry?.liked ?? 0}
-                        total={entry?.total ?? 1}
-                        avgRating={Number(entry?.avgRating ?? 0)}
-                      />
-                    );
-                  }}
+
+          <div className="relative z-10 overflow-x-auto hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+            {/* On mobile, we force a wide scroll area so buildings are CHUNKY (min 800px) */}
+            <div className="min-w-[850px] md:min-w-full">
+              <ResponsiveContainer width="100%" height={340}>
+                <BarChart 
+                  data={brandData} 
+                  margin={{ top: 10, right: 20, left: -20, bottom: 75 }}
+                  barCategoryGap="12%"
                 >
-                  {brandData.map((_, i) => (
-                    <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                  <XAxis
+                    dataKey="brand"
+                    angle={-45}
+                    textAnchor="end"
+                    tick={{ fontFamily: 'Bangers', fontSize: 13, letterSpacing: 1, fill: '#eaea00' }}
+                    interval={0}
+                    axisLine={{ stroke: '#eaea00', strokeWidth: 2 }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    ticks={[0, 50, 100]}
+                    tickFormatter={(v: any) => `${v}`}
+                    tick={{ fontFamily: 'Bangers', fontSize: 11, fill: '#b9cac9' }}
+                    axisLine={{ stroke: '#b9cac9' }}
+                    tickLine={false}
+                  />
+                  <Tooltip content={<CityTooltip />} cursor={{ fill: 'rgba(255,255,255,0.08)' }} />
+                  <Bar
+                    dataKey="heightVal"
+                    shape={(shapeProps: BuildingProps) => {
+                      const entry = brandData[shapeProps.index ?? 0];
+                      return (
+                        <ComicBuilding
+                          {...shapeProps}
+                          fill={BRAND_COLORS[(shapeProps.index ?? 0) % BRAND_COLORS.length]}
+                          liked={entry?.liked ?? 0}
+                          total={entry?.total ?? 1}
+                          avgRating={Number(entry?.avgRating ?? 0)}
+                        />
+                      );
+                    }}
+                  >
+                    {brandData.map((_, i) => (
+                      <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {/* Visual indicator for mobile scroll */}
+            <div className="md:hidden flex justify-center gap-1 mt-[-10px] pb-2">
+              <div className="w-12 h-1 bg-[#eaea00] opacity-30 rounded-full" />
+              <div className="w-4 h-1 bg-[#eaea00] opacity-30 rounded-full" />
+              <div className="w-2 h-1 bg-[#eaea00] opacity-30 rounded-full" />
+            </div>
           </div>
         </section>
 
         {/* ——— RATING DISTRIBUTION ——— */}
         <aside className="md:col-span-4 bg-white comic-border comic-shadow p-6">
           <h2 className="font-bangers text-2xl -rotate-2 inline-block bg-[#fe00fe] text-white px-2 py-1 comic-border mb-4 tracking-wider">
-            RATING DISTRIBUTION
+            DISTRIBUTION
           </h2>
-          <p className="font-vietnam text-xs text-[#6a7a7a] mb-4">How Abid&apos;s ratings cluster across all 38 drinks.</p>
+          <p className="font-vietnam text-xs text-[#6a7a7a] mb-4">How Abid&apos;s ratings cluster across all reviews.</p>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={histData} margin={{ top: 4, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={histData} margin={{ top: 4, right: 10, left: -25, bottom: 0 }}>
               <CartesianGrid strokeDasharray="0" stroke="#e2e2e2" vertical={false} />
-              <XAxis dataKey="range" tick={{ fontFamily: 'Bangers', fontSize: 13 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fontFamily: 'Bangers', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="range" tick={{ fontFamily: 'Bangers', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontFamily: 'Bangers', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{ fontFamily: 'Bangers', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', boxShadow: '6px 6px 0 #1b1b1b', letterSpacing: 1 }}
                 formatter={(v: any) => [`${v} drink${v !== 1 ? 's' : ''}`, 'Count']}
@@ -276,45 +321,47 @@ export default function StatsClient({ reviews: r }: Props) {
         </aside>
 
         {/* ——— TASTE RADAR ——— */}
-        <section className="md:col-span-6 bg-white comic-border comic-shadow p-6">
+        <section id="taste" className="md:col-span-6 bg-white comic-border comic-shadow p-4 md:p-6">
           <h2 className="font-bangers text-2xl -rotate-1 inline-block bg-[#00fbfb] px-3 py-1 comic-border mb-2 tracking-wider">
-            TASTE PROFILE RADAR
+            TASTE RADAR
           </h2>
           <p className="font-vietnam text-xs text-[#6a7a7a] mb-4">
-            Cyan = Abid&apos;s top-5 rated drinks · Grey = all 38 drinks
+            Cyan = Top-5 drinks · Grey = all 38
           </p>
-          <ResponsiveContainer width="100%" height={280}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#e2e2e2" />
-              <PolarAngleAxis dataKey="metric" tick={{ fontFamily: 'Bangers', fontSize: 12, fill: '#1b1b1b' }} />
-              <PolarRadiusAxis domain={[0, 5]} tick={{ fontFamily: 'Bangers', fontSize: 9 }} />
-              <Radar name="All Drinks" dataKey="all" stroke="#6a7a7a" fill="#6a7a7a" fillOpacity={0.2} />
-              <Radar name="Top 5 Rated" dataKey="top5" stroke="#006a6a" fill="#006a6a" fillOpacity={0.4} />
-              <Legend wrapperStyle={{ fontFamily: 'Bangers', letterSpacing: 1, fontSize: 13 }} />
-            </RadarChart>
-          </ResponsiveContainer>
+          <div className="flex justify-center">
+            <ResponsiveContainer width="100%" height={300}>
+              <RadarChart data={radarData} margin={{ top: 0, right: 30, left: 30, bottom: 0 }}>
+                <PolarGrid stroke="#e2e2e2" />
+                <PolarAngleAxis dataKey="metric" tick={{ fontFamily: 'Bangers', fontSize: 11, fill: '#1b1b1b' }} />
+                <PolarRadiusAxis domain={[0, 5]} tick={{ fontFamily: 'Bangers', fontSize: 8 }} />
+                <Radar name="All Drinks" dataKey="all" stroke="#6a7a7a" fill="#6a7a7a" fillOpacity={0.2} />
+                <Radar name="Top 5 Rated" dataKey="top5" stroke="#006a6a" fill="#006a6a" fillOpacity={0.4} />
+                <Legend wrapperStyle={{ fontFamily: 'Bangers', letterSpacing: 1, fontSize: 12, paddingTop: '10px' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
         </section>
 
         {/* ——— REFRESHING VS RATING SCATTER ——— */}
-        <aside className="md:col-span-6 bg-white comic-border comic-shadow p-6">
+        <aside id="scatter" className="md:col-span-6 bg-white comic-border comic-shadow p-6">
           <h2 className="font-bangers text-2xl rotate-1 inline-block bg-[#eaea00] px-3 py-1 comic-border mb-2 tracking-wider">
-            REFRESHING SCORE VS RATING
+            REFRESHING VS RATING
           </h2>
-          <p className="font-vietnam text-xs text-[#6a7a7a] mb-4">Does feeling refreshed predict a higher rating? (spoiler: yes)</p>
+          <p className="font-vietnam text-xs text-[#6a7a7a] mb-4">Does feeling refreshed predict a higher rating?</p>
           <ResponsiveContainer width="100%" height={260}>
             <ScatterChart margin={{ top: 10, right: 20, left: -10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="0" stroke="#e2e2e2" />
               <XAxis dataKey="x" name="Refreshing" type="number" domain={[0.5, 5.5]}
-                label={{ value: 'Refreshing Score', position: 'bottom', fontFamily: 'Bangers', fontSize: 13, dy: 10 }}
-                tick={{ fontFamily: 'Bangers', fontSize: 12 }}
+                label={{ value: 'Refreshing', position: 'bottom', fontFamily: 'Bangers', fontSize: 12, dy: 10 }}
+                tick={{ fontFamily: 'Bangers', fontSize: 11 }}
                 axisLine={{ stroke: '#1b1b1b' }} />
               <YAxis dataKey="y" name="Rating" domain={[0, 10]}
-                label={{ value: 'Abid\'s Rating', angle: -90, position: 'insideLeft', fontFamily: 'Bangers', fontSize: 13, dy: 55 }}
-                tick={{ fontFamily: 'Bangers', fontSize: 12 }}
+                label={{ value: 'Rating', angle: -90, position: 'insideLeft', fontFamily: 'Bangers', fontSize: 12, dy: 30 }}
+                tick={{ fontFamily: 'Bangers', fontSize: 11 }}
                 axisLine={{ stroke: '#1b1b1b' }} />
               <Tooltip
                 cursor={{ strokeDasharray: '4 4' }}
-                contentStyle={{ fontFamily: 'Be Vietnam Pro', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', boxShadow: '6px 6px 0 #1b1b1b', fontSize: 12 }}
+                contentStyle={{ fontFamily: 'Be Vietnam Pro', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', boxShadow: '6px 6px 0 #1b1b1b', fontSize: 11 }}
                 formatter={(_: any, name: any, props: any) => {
                   if (name === 'y') return [`${props.payload?.y}/10`, 'Rating'];
                   if (name === 'x') return [props.payload?.x, 'Refreshing'];
@@ -327,26 +374,28 @@ export default function StatsClient({ reviews: r }: Props) {
         </aside>
 
         {/* ——— FLAVOR PIE ——— */}
-        <section className="md:col-span-12 bg-white comic-border comic-shadow p-6">
+        <section id="flavors" className="md:col-span-12 bg-white comic-border comic-shadow p-4 md:p-6">
           <h2 className="font-bangers text-2xl -rotate-1 inline-block bg-[#ffd7f5] px-3 py-1 comic-border mb-4 tracking-wider">
-            FLAVOR BREAKDOWN — WHAT HAS ABID ACTUALLY TRIED?
+            FLAVOR BREAKDOWN
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={flavData} dataKey="value" nameKey="name"
-                  cx="50%" cy="50%" outerRadius={110}
-                  stroke="#1b1b1b" strokeWidth={2}
-                >
-                  {flavData.map((_, i) => <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ fontFamily: 'Bangers', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', letterSpacing: 1 }} />
-                <Legend wrapperStyle={{ fontFamily: 'Bangers', letterSpacing: 1, fontSize: 13 }} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="flex flex-col lg:flex-row gap-6 items-center">
+            <div className="w-full lg:w-1/2">
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={flavData} dataKey="value" nameKey="name"
+                    cx="50%" cy="50%" outerRadius={80}
+                    stroke="#1b1b1b" strokeWidth={2}
+                  >
+                    {flavData.map((_, i) => <Cell key={i} fill={BRAND_COLORS[i % BRAND_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontFamily: 'Bangers', border: '4px solid #1b1b1b', borderRadius: '4px 8px 3px 10px', letterSpacing: 1 }} />
+                  <Legend wrapperStyle={{ fontFamily: 'Bangers', letterSpacing: 1, fontSize: 11 }} layout="horizontal" verticalAlign="bottom" align="center" />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
             {/* Flavor breakdown table */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="w-full lg:w-1/2 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {flavData.map((f, i) => {
                 const flavorReviews = r.filter(d => d.primary_flavor_category === f.name);
                 const flavorAvg = avg(flavorReviews.map(d => d.rating));
@@ -355,7 +404,7 @@ export default function StatsClient({ reviews: r }: Props) {
                   <div key={f.name} className="comic-border p-3 flex flex-col gap-1"
                     style={{ background: BRAND_COLORS[i % BRAND_COLORS.length] + '22', borderColor: BRAND_COLORS[i % BRAND_COLORS.length] }}>
                     <div className="font-bangers text-base tracking-wider leading-tight">{f.name}</div>
-                    <div className="font-vietnam text-xs">
+                    <div className="font-vietnam text-[10px] md:text-xs">
                       <span className="font-bold">{f.value}</span> tried · avg <span className="font-bold">{flavorAvg.toFixed(1)}</span> · <span className="font-bold">{flavorLiked}</span> liked
                     </div>
                   </div>
@@ -366,9 +415,9 @@ export default function StatsClient({ reviews: r }: Props) {
         </section>
 
         {/* ——— COMPARISON STATS ——— */}
-        <section className="md:col-span-12 bg-white comic-border comic-shadow p-6 mt-2">
-          <h2 className="font-bangers text-3xl -rotate-1 inline-block bg-[#ba1a1a] text-white px-3 py-1 comic-border mb-6 tracking-wider">
-            ⚡ HEAD-TO-HEAD COMPARISONS
+        <section id="comparisons" className="md:col-span-12 bg-white comic-border comic-shadow p-4 md:p-6 mt-2">
+          <h2 className="font-bangers text-2xl md:text-3xl -rotate-1 inline-block bg-[#ba1a1a] text-white px-3 py-1 comic-border mb-6 tracking-wider">
+            ⚡ HEAD-TO-HEAD
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* VS helper */}
@@ -389,24 +438,24 @@ export default function StatsClient({ reviews: r }: Props) {
                 const tie = Math.abs(leftAvg - rightAvg) < 0.05;
                 return (
                   <div className="comic-border p-4 bg-[#f9f9f9]">
-                    <div className="font-bangers text-lg tracking-widest text-[#6a7a7a] mb-3">{label}</div>
-                    <div className="flex items-center gap-3">
+                    <div className="font-bangers text-base md:text-lg tracking-widest text-[#6a7a7a] mb-4">{label}</div>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                       {/* Left */}
-                      <div className={`flex-1 p-4 comic-border text-center transition-all ${!tie && leftWins ? 'scale-105' : 'opacity-80'}`}
+                      <div className={`w-full sm:flex-1 p-4 comic-border text-center transition-all ${!tie && leftWins ? 'scale-105' : 'opacity-80'}`}
                         style={{ background: accentLeft }}>
-                        <div className="font-bangers text-xl tracking-wider leading-tight mb-1">{leftLabel}</div>
+                        <div className="font-bangers text-lg tracking-wider leading-tight mb-1">{leftLabel}</div>
                         <div className="font-bangers text-4xl leading-none">{leftAvg.toFixed(1)}</div>
-                        <div className="font-vietnam text-xs mt-1">{leftReviews.length} drinks · {leftLikedPct}% liked</div>
+                        <div className="font-vietnam text-[10px] mt-1 uppercase font-bold">{leftReviews.length} drinks · {leftLikedPct}% liked</div>
                         {!tie && leftWins && <div className="font-bangers text-sm mt-2 bg-[#1b1b1b] text-[#eaea00] px-2 inline-block">WINNER!</div>}
                       </div>
                       {/* VS badge */}
-                      <div className="font-bangers text-3xl text-[#1b1b1b] flex-shrink-0 -rotate-6">VS</div>
+                      <div className="font-bangers text-3xl text-[#1b1b1b] flex-shrink-0 -rotate-6 my-2 sm:my-0">VS</div>
                       {/* Right */}
-                      <div className={`flex-1 p-4 comic-border text-center transition-all ${!tie && !leftWins ? 'scale-105' : 'opacity-80'}`}
+                      <div className={`w-full sm:flex-1 p-4 comic-border text-center transition-all ${!tie && !leftWins ? 'scale-105' : 'opacity-80'}`}
                         style={{ background: accentRight }}>
-                        <div className="font-bangers text-xl tracking-wider leading-tight mb-1">{rightLabel}</div>
+                        <div className="font-bangers text-lg tracking-wider leading-tight mb-1">{rightLabel}</div>
                         <div className="font-bangers text-4xl leading-none">{rightAvg.toFixed(1)}</div>
-                        <div className="font-vietnam text-xs mt-1">{rightReviews.length} drinks · {rightLikedPct}% liked</div>
+                        <div className="font-vietnam text-[10px] mt-1 uppercase font-bold">{rightReviews.length} drinks · {rightLikedPct}% liked</div>
                         {!tie && !leftWins && <div className="font-bangers text-sm mt-2 bg-[#1b1b1b] text-[#eaea00] px-2 inline-block">WINNER!</div>}
                       </div>
                     </div>
@@ -431,11 +480,11 @@ export default function StatsClient({ reviews: r }: Props) {
               return (
                 <>
                   {vsCard('SUGAR-FREE VS REGULAR', 'Sugar-Free', sugarFree, 'Regular', notSugarFree, '#00fbfb', '#ffd7f5')}
-                  {vsCard('HIGH CAFFEINE VS LOW', 'High Caff (150mg+)', highCaff, 'Low Caff (<150mg)', lowCaff, '#fe00fe', '#b7e4c7')}
+                  {vsCard('HIGH CAFFEINE VS LOW', 'High Caff', highCaff, 'Low Caff', lowCaff, '#fe00fe', '#b7e4c7')}
                   {vsCard('SWEET VS NOT-SO-SWEET', 'Very Sweet', highSweet, 'Low Sugar', lowSweet, '#eaea00', '#e2e2e2')}
-                  {vsCard('HIGHLY CARBONATED VS SMOOTH', 'Fizzy (4-5)', highCarb, 'Smooth (1-2)', lowCarb, '#00fbfb', '#ffd7f5')}
-                  {vsCard('FRUIT/BERRY/TROPICAL VS CITRUS', 'Fruity', fruityDrinks, 'Citrus', citrusDrinks, '#b7e4c7', '#eaea00')}
-                  {vsCard('SMOOTH TEXTURE VS ROUGH', 'Super Smooth (4-5)', smoothHigh, 'Rough/Harsh (1-2)', smoothLow, '#ffd7f5', '#ba1a1a')}
+                  {vsCard('CARBONATED VS SMOOTH', 'Fizzy (4-5)', highCarb, 'Smooth (1-2)', lowCarb, '#00fbfb', '#ffd7f5')}
+                  {vsCard('FRUITY VS CITRUS', 'Fruity', fruityDrinks, 'Citrus', citrusDrinks, '#b7e4c7', '#eaea00')}
+                  {vsCard('SMOOTH VS ROUGH', 'Smooth (4-5)', smoothHigh, 'Rough (1-2)', smoothLow, '#ffd7f5', '#ba1a1a')}
                 </>
               );
             })()}
