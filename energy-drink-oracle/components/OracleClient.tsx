@@ -11,13 +11,13 @@ interface Props {
   untriedDrinks: UntriedDrink[];
 }
 
-const SLIDER_FIELDS: { key: keyof PredictorInputs; label: string; emoji: string }[] = [
-  { key: 'sweetness_level',           label: 'SWEETNESS',         emoji: '🍭' },
-  { key: 'tartness_level',            label: 'TARTNESS',          emoji: '🍋' },
-  { key: 'carbonation_level',         label: 'CARBONATION',       emoji: '🫧' },
-  { key: 'artificial_sweetener_taste',label: 'ARTIFICIAL TASTE',  emoji: '🧪' },
-  { key: 'smoothness',                label: 'SMOOTHNESS',        emoji: '🧈' },
-  { key: 'refreshing_score',          label: 'REFRESHING',        emoji: '❄️' },
+const SLIDER_FIELDS: { key: keyof PredictorInputs; label: string }[] = [
+  { key: 'sweetness_level',           label: 'SWEETNESS' },
+  { key: 'tartness_level',            label: 'TARTNESS' },
+  { key: 'carbonation_level',         label: 'CARBONATION' },
+  { key: 'artificial_sweetener_taste',label: 'ARTIFICIAL TASTE' },
+  { key: 'smoothness',                label: 'SMOOTHNESS' },
+  { key: 'refreshing_score',          label: 'REFRESHING' },
 ];
 
 const DEFAULT_INPUTS: PredictorInputs = {
@@ -102,7 +102,7 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
                 activeTab === 'catalog' ? 'bg-[#eaea00] text-black translate-x-1 translate-y-1 shadow-[4px_4px_0_0_#1b1b1b]' : 'bg-[#e2e2e2] comic-btn'
               }`}
             >
-              📋 UN-TRIED BREWS
+              UN-TRIED BREWS
             </button>
             <button
               onClick={() => { setActiveTab('custom'); setResult(null); }}
@@ -110,7 +110,7 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
                 activeTab === 'custom' ? 'bg-[#fe00fe] text-white translate-x-1 translate-y-1 shadow-[4px_4px_0_0_#1b1b1b]' : 'bg-[#e2e2e2] comic-btn'
               }`}
             >
-              🧪 CUSTOM BUILD
+              CUSTOM BUILD
             </button>
           </div>
 
@@ -135,10 +135,10 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
                   <div className="bg-[#f3f3f3] comic-border p-4 text-sm font-vietnam">
                     <div className="font-bangers text-lg tracking-wider mb-2">{d.name}</div>
                     <div className="grid grid-cols-2 gap-1 text-xs">
-                      <span>☕ Caffeine: <strong>{d.caffeine_amount_mg}mg</strong></span>
-                      <span>🍬 Sugar-free: <strong>{d.sugar_free ? 'Yes' : 'No'}</strong></span>
-                      <span>🍓 Flavor: <strong>{d.official_flavor_notes}</strong></span>
-                      <span>🏷️ Category: <strong>{d.primary_flavor_category}</strong></span>
+                      <span>Caffeine: <strong>{d.caffeine_amount_mg}mg</strong></span>
+                      <span>Sugar-free: <strong>{d.sugar_free ? 'Yes' : 'No'}</strong></span>
+                      <span>Flavor: <strong>{d.official_flavor_notes}</strong></span>
+                      <span>Category: <strong>{d.primary_flavor_category}</strong></span>
                     </div>
                   </div>
                 );
@@ -186,10 +186,10 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
               </div>
 
               {/* Sliders */}
-              {SLIDER_FIELDS.map(({ key, label, emoji }) => (
+              {SLIDER_FIELDS.map(({ key, label }) => (
                 <div key={key} className="flex flex-col gap-1">
                   <div className="flex justify-between items-center">
-                    <label className="font-bangers text-lg tracking-wider">{emoji} {label}</label>
+                    <label className="font-bangers text-lg tracking-wider">{label}</label>
                     <span
                       className="font-bangers text-xl px-2 py-0.5 comic-border"
                       style={{ background: '#eaea00', minWidth: 32, textAlign: 'center' }}
@@ -217,7 +217,7 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
             disabled={activeTab === 'catalog' && !selectedUntriedId}
             className="w-full font-bangers text-3xl py-5 bg-[#fe00fe] text-white comic-border comic-btn tracking-wider disabled:opacity-40 disabled:cursor-not-allowed -rotate-1"
           >
-            {predicting ? '⏳ CONSULTING...' : '🔮 PREDICT!'}
+            {predicting ? 'CONSULTING...' : 'PREDICT!'}
           </button>
         </div>
 
@@ -230,8 +230,8 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
           {/* Default state */}
           {!result && !predicting && (
             <div className="text-center relative z-10">
-              <div className="text-6xl mb-4">⏳</div>
-              <p className="font-bangers text-2xl text-[#6a7a7a] tracking-wider">AWAITING INPUT DATA...</p>
+              <div className="text-8xl mb-6 drop-shadow-[0_0_15px_rgba(254,0,254,0.5)]">🔮</div>
+              <p className="font-bangers text-2xl text-[#6a7a7a] tracking-wider uppercase">Awaiting input data...</p>
               <p className="font-vietnam text-sm text-[#6a7a7a] mt-2">Configure your drink profile and hit PREDICT!</p>
             </div>
           )}
@@ -239,7 +239,7 @@ export default function OracleClient({ reviews, weights, untriedDrinks }: Props)
           {/* Loading */}
           {predicting && (
             <div className="text-center relative z-10">
-              <div className="font-bangers text-4xl text-[#a900a9] tracking-wider animate-pulse">🔮 CONSULTING THE ORACLE...</div>
+              <div className="font-bangers text-4xl text-[#a900a9] tracking-wider animate-pulse">CONSULTING THE ORACLE...</div>
             </div>
           )}
 

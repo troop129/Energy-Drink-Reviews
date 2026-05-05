@@ -89,7 +89,6 @@ export default function DatabaseClient({ reviews }: Props) {
             onChange={e => setSearch(e.target.value)}
             className="w-full comic-border border-4 border-black px-4 py-3 font-bangers text-lg tracking-wider bg-white focus:outline-none focus:border-[#006a6a]"
           />
-          <span className="absolute right-3 top-3 text-xl">🔍</span>
         </div>
       </div>
 
@@ -101,14 +100,14 @@ export default function DatabaseClient({ reviews }: Props) {
           onClick={() => setSugarFreeOnly(v => !v)}
           className={`font-bangers text-lg px-4 py-2 comic-border comic-btn tracking-wider -rotate-1 ${sugarFreeOnly ? 'bg-[#00fbfb] text-black shadow-[4px_4px_0_0_#1b1b1b] translate-x-1 translate-y-1' : 'bg-[#00fbfb] text-black'}`}
         >
-          {sugarFreeOnly ? '✓' : ''} ZAP! SUGAR-FREE
+          {sugarFreeOnly ? '' : ''} ZAP! SUGAR-FREE
         </button>
 
         <button
           onClick={() => setHighCaffOnly(v => !v)}
           className={`font-bangers text-lg px-4 py-2 comic-border comic-btn tracking-wider rotate-1 ${highCaffOnly ? 'bg-[#fe00fe] text-white shadow-[4px_4px_0_0_#1b1b1b] translate-x-1 translate-y-1' : 'bg-[#fe00fe] text-white'}`}
         >
-          {highCaffOnly ? '✓' : ''} POW! HIGH CAFFEINE (150mg+)
+          {highCaffOnly ? '' : ''} POW! HIGH CAFFEINE (150mg+)
         </button>
 
         <select
@@ -268,7 +267,7 @@ export default function DatabaseClient({ reviews }: Props) {
               </div>
               <div className="bg-[#f3f3f3] comic-border p-2">
                 <strong>Caffeine:</strong> {selectedDrink.caffeine_amount_mg || '?'}mg<br />
-                <strong>Sugar Free:</strong> {selectedDrink.sugar_free ? 'Yes ✓' : 'No'}
+                <strong>Sugar Free:</strong> {selectedDrink.sugar_free ? 'Yes' : 'No'}
               </div>
               <div className="bg-[#f3f3f3] comic-border p-2 col-span-2">
                 <strong>Your Taste Notes:</strong><br />{selectedDrink.user_taste_profile || '—'}

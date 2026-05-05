@@ -19,7 +19,7 @@ function avg(nums: number[]) {
 }
 
 // ——— Comic Building Bar Shape ———
-// Each bar is drawn as a comic-style building with window grids
+// Building height = drinks tried (normalized). Windows = total tried; lit windows = liked.
 interface BuildingProps {
   x?: number; y?: number; width?: number; height?: number;
   fill?: string; index?: number;
@@ -31,23 +31,22 @@ function ComicBuilding(props: BuildingProps): ReactElement {
   if (height <= 0 || width <= 0) return <g />;
 
   const border = 2;
-  const winCols = Math.max(1, Math.floor(width / 14));
-  const winRows = Math.max(1, Math.floor(height / 18));
+  const winCols = 4;
+  const winRows = Math.max(1, Math.floor(height / 20));
   const winW = Math.max(4, (width - border * 2 - winCols * 4) / winCols);
   const winH = Math.max(4, (height - 24 - border * 2 - winRows * 4) / winRows);
-  const litCount = liked; // light up as many windows as liked count
 
   const windows: { wx: number; wy: number; lit: boolean }[] = [];
-  let litSoFar = 0;
+  let idx = 0;
   for (let r = 0; r < winRows; r++) {
     for (let c = 0; c < winCols; c++) {
-      const lit = litSoFar < litCount;
+      if (idx >= total) break;
       windows.push({
         wx: x + border + c * (winW + 4) + 2,
         wy: y + border + 8 + r * (winH + 4) + 4,
-        lit,
+        lit: idx < liked,
       });
-      if (lit) litSoFar++;
+      idx++;
     }
   }
 
@@ -59,14 +58,14 @@ function ComicBuilding(props: BuildingProps): ReactElement {
       <rect x={x} y={y} width={width} height={8} fill="#1b1b1b" />
       {/* Outer border */}
       <rect x={x} y={y} width={width} height={height} fill="none" stroke="#1b1b1b" strokeWidth={border} />
-      {/* Windows */}
+      {/* Windows: yellow=liked, dark=tried-not-liked */}
       {windows.map((w, i) => (
         <rect
           key={i}
           x={w.wx} y={w.wy}
           width={Math.max(2, winW)} height={Math.max(2, winH)}
           fill={w.lit ? '#eaea00' : '#1b1b1b'}
-          opacity={w.lit ? 1 : 0.25}
+          opacity={w.lit ? 1 : 0.22}
           stroke="#1b1b1b" strokeWidth={0.5}
         />
       ))}
@@ -89,30 +88,32 @@ function CityTooltip({ active, payload }: CityTooltipProps) {
       padding: '10px 14px', fontFamily: 'Bangers', letterSpacing: 1,
     }}>
       <div style={{ fontSize: 18, marginBottom: 4 }}>{d.brand}</div>
-      <div style={{ fontSize: 15 }}>🏙️ <strong>{d.likedPct}%</strong> liked ({d.liked} of {d.total} tried)</div>
-      <div style={{ fontSize: 13, marginTop: 2 }}>📊 Avg rating: <strong>{d.avgRating} / 10</strong></div>
+      <div style={{ fontSize: 15 }}><strong>{d.total}</strong> drinks tried</div>
+      <div style={{ fontSize: 15 }}><strong>{d.liked}</strong> liked ({d.likedPct}%)</div>
+      <div style={{ fontSize: 13, marginTop: 2 }}>Avg rating: <strong>{d.avgRating} / 10</strong></div>
     </div>
   );
 }
 
 
 export default function StatsClient({ reviews: r }: Props) {
-  // ——— Brand breakdown: % liked, raw count, avg
+  // ——— Brand breakdown: count, liked, avg
   const brandMap: Record<string, number[]> = {};
   r.forEach(d => { (brandMap[d.brand] = brandMap[d.brand] || []).push(d.rating); });
-  const brandData = Object.entries(brandMap)
-    .map(([brand, ratings]) => {
-      const liked = ratings.filter(v => v >= LIKED_THRESHOLD).length;
-      const total = ratings.length;
-      return {
-        brand,
-        liked,
-        total,
-        likedPct: Math.round((liked / total) * 100), // 0–100, normalised
-        avgRating: avg(ratings).toFixed(1),
-      };
-    })
-    .sort((a, b) => b.likedPct - a.likedPct);
+  const rawBrandData = Object.entries(brandMap).map(([brand, ratings]) => {
+    const liked = ratings.filter(v => v >= LIKED_THRESHOLD).length;
+    const total = ratings.length;
+    return { brand, liked, total, likedPct: Math.round((liked / total) * 100), avgRating: avg(ratings).toFixed(1) };
+  });
+  const maxTotal = Math.max(...rawBrandData.map(b => b.total));
+  const MIN_HEIGHT_PCT = 25; // every brand gets at least 25% chart height
+  const brandData = rawBrandData
+    .map(b => ({
+      ...b,
+      // heightVal: normalize total to 0–100 range, floor at MIN_HEIGHT_PCT
+      heightVal: Math.round(MIN_HEIGHT_PCT + ((b.total / maxTotal) * (100 - MIN_HEIGHT_PCT))),
+    }))
+    .sort((a, b) => b.total - a.total);
 
   // ——— Scatter: refreshing_score vs rating
   const scatterData = r.map(d => ({ x: d.refreshing_score, y: d.rating, name: d.official_name }));
@@ -202,7 +203,7 @@ export default function StatsClient({ reviews: r }: Props) {
             BRAND CITYSCAPE
           </h2>
           <p className="font-vietnam text-xs text-[#b9cac9] mb-4 relative z-10">
-            🏙️ Building height = % of that brand&apos;s drinks Abid liked (rated {LIKED_THRESHOLD}+). Lit windows = liked count. Hover for details.
+            Building height = drinks tried · Yellow windows = liked (7+) · Dark windows = tried but meh
           </p>
           <div className="relative z-10">
             <ResponsiveContainer width="100%" height={320}>
@@ -219,15 +220,15 @@ export default function StatsClient({ reviews: r }: Props) {
                 <YAxis
                   domain={[0, 100]}
                   ticks={[0, 25, 50, 75, 100]}
-                  tickFormatter={(v: number) => `${v}%`}
+                  tickFormatter={(v: number) => `${v}`}
                   tick={{ fontFamily: 'Bangers', fontSize: 12, fill: '#b9cac9' }}
                   axisLine={{ stroke: '#b9cac9' }}
                   tickLine={false}
-                  label={{ value: '% liked', angle: -90, position: 'insideLeft', fill: '#b9cac9', fontFamily: 'Bangers', fontSize: 13, dy: 30 }}
+                  label={{ value: 'drinks tried →', angle: -90, position: 'insideLeft', fill: '#b9cac9', fontFamily: 'Bangers', fontSize: 12, dy: 45 }}
                 />
                 <Tooltip content={<CityTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                 <Bar
-                  dataKey="likedPct"
+                  dataKey="heightVal"
                   shape={(shapeProps: BuildingProps) => {
                     const entry = brandData[shapeProps.index ?? 0];
                     return (
@@ -361,6 +362,83 @@ export default function StatsClient({ reviews: r }: Props) {
                 );
               })}
             </div>
+          </div>
+        </section>
+
+        {/* ——— COMPARISON STATS ——— */}
+        <section className="md:col-span-12 bg-white comic-border comic-shadow p-6 mt-2">
+          <h2 className="font-bangers text-3xl -rotate-1 inline-block bg-[#ba1a1a] text-white px-3 py-1 comic-border mb-6 tracking-wider">
+            ⚡ HEAD-TO-HEAD COMPARISONS
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* VS helper */}
+            {(() => {
+              function vsCard(
+                label: string,
+                leftLabel: string, leftReviews: typeof r,
+                rightLabel: string, rightReviews: typeof r,
+                accentLeft: string, accentRight: string,
+              ) {
+                const leftAvg = avg(leftReviews.map(d => d.rating));
+                const rightAvg = avg(rightReviews.map(d => d.rating));
+                const leftLiked = leftReviews.filter(d => d.rating >= LIKED_THRESHOLD).length;
+                const rightLiked = rightReviews.filter(d => d.rating >= LIKED_THRESHOLD).length;
+                const leftLikedPct = leftReviews.length ? Math.round((leftLiked / leftReviews.length) * 100) : 0;
+                const rightLikedPct = rightReviews.length ? Math.round((rightLiked / rightReviews.length) * 100) : 0;
+                const leftWins = leftAvg > rightAvg;
+                const tie = Math.abs(leftAvg - rightAvg) < 0.05;
+                return (
+                  <div className="comic-border p-4 bg-[#f9f9f9]">
+                    <div className="font-bangers text-lg tracking-widest text-[#6a7a7a] mb-3">{label}</div>
+                    <div className="flex items-center gap-3">
+                      {/* Left */}
+                      <div className={`flex-1 p-4 comic-border text-center transition-all ${!tie && leftWins ? 'scale-105' : 'opacity-80'}`}
+                        style={{ background: accentLeft }}>
+                        <div className="font-bangers text-xl tracking-wider leading-tight mb-1">{leftLabel}</div>
+                        <div className="font-bangers text-4xl leading-none">{leftAvg.toFixed(1)}</div>
+                        <div className="font-vietnam text-xs mt-1">{leftReviews.length} drinks · {leftLikedPct}% liked</div>
+                        {!tie && leftWins && <div className="font-bangers text-sm mt-2 bg-[#1b1b1b] text-[#eaea00] px-2 inline-block">WINNER!</div>}
+                      </div>
+                      {/* VS badge */}
+                      <div className="font-bangers text-3xl text-[#1b1b1b] flex-shrink-0 -rotate-6">VS</div>
+                      {/* Right */}
+                      <div className={`flex-1 p-4 comic-border text-center transition-all ${!tie && !leftWins ? 'scale-105' : 'opacity-80'}`}
+                        style={{ background: accentRight }}>
+                        <div className="font-bangers text-xl tracking-wider leading-tight mb-1">{rightLabel}</div>
+                        <div className="font-bangers text-4xl leading-none">{rightAvg.toFixed(1)}</div>
+                        <div className="font-vietnam text-xs mt-1">{rightReviews.length} drinks · {rightLikedPct}% liked</div>
+                        {!tie && !leftWins && <div className="font-bangers text-sm mt-2 bg-[#1b1b1b] text-[#eaea00] px-2 inline-block">WINNER!</div>}
+                      </div>
+                    </div>
+                    {tie && <div className="font-bangers text-center text-lg text-[#6a7a7a] mt-2">IT&apos;S A TIE!</div>}
+                  </div>
+                );
+              }
+
+              const sugarFree = r.filter(d => d.sugar_free);
+              const notSugarFree = r.filter(d => !d.sugar_free);
+              const highCaff = r.filter(d => d.caffeine_amount_mg >= 150);
+              const lowCaff = r.filter(d => d.caffeine_amount_mg > 0 && d.caffeine_amount_mg < 150);
+              const highCarb = r.filter(d => d.carbonation_level >= 4);
+              const lowCarb = r.filter(d => d.carbonation_level <= 2);
+              const highSweet = r.filter(d => d.sweetness_level >= 4);
+              const lowSweet = r.filter(d => d.sweetness_level <= 2);
+              const fruityDrinks = r.filter(d => ['Fruit', 'Berry', 'Tropical', 'Watermelon'].some(f => d.primary_flavor_category?.includes(f)));
+              const citrusDrinks = r.filter(d => ['Citrus', 'Lemon', 'Lime'].some(f => d.primary_flavor_category?.includes(f)));
+              const smoothHigh = r.filter(d => d.smoothness >= 4);
+              const smoothLow = r.filter(d => d.smoothness <= 2);
+
+              return (
+                <>
+                  {vsCard('SUGAR-FREE VS REGULAR', 'Sugar-Free', sugarFree, 'Regular', notSugarFree, '#00fbfb', '#ffd7f5')}
+                  {vsCard('HIGH CAFFEINE VS LOW', 'High Caff (150mg+)', highCaff, 'Low Caff (<150mg)', lowCaff, '#fe00fe', '#b7e4c7')}
+                  {vsCard('SWEET VS NOT-SO-SWEET', 'Very Sweet', highSweet, 'Low Sugar', lowSweet, '#eaea00', '#e2e2e2')}
+                  {vsCard('HIGHLY CARBONATED VS SMOOTH', 'Fizzy (4-5)', highCarb, 'Smooth (1-2)', lowCarb, '#00fbfb', '#ffd7f5')}
+                  {vsCard('FRUIT/BERRY/TROPICAL VS CITRUS', 'Fruity', fruityDrinks, 'Citrus', citrusDrinks, '#b7e4c7', '#eaea00')}
+                  {vsCard('SMOOTH TEXTURE VS ROUGH', 'Super Smooth (4-5)', smoothHigh, 'Rough/Harsh (1-2)', smoothLow, '#ffd7f5', '#ba1a1a')}
+                </>
+              );
+            })()}
           </div>
         </section>
 

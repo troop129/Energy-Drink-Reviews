@@ -7,7 +7,7 @@ const navLinks = [
   { href: '/',          label: 'Home' },
   { href: '/database',  label: 'All Reviews' },
   { href: '/stats',     label: 'Stats Lab' },
-  { href: '/oracle',    label: 'The Oracle' },
+  { href: '/oracle',    label: '🔮 The Oracle' },
 ];
 
 export default function NavBar() {
