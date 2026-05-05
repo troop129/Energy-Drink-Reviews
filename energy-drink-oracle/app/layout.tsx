@@ -6,6 +6,9 @@ import ComicFooter from "@/components/ComicFooter";
 export const metadata: Metadata = {
   title: "Abid's Energy Drink Reviews",
   description: "38 energy drinks tried, rated, and analyzed with Ridge Regression. Abid's personal drink log.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
