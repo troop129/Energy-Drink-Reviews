@@ -1,0 +1,267 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN SYSTEM TOKENS — Action Narrative / CMYK Pop-Art
+   Sourced directly from stitch_energy_drink_comic_oracle/action_narrative/DESIGN.md
+   ============================================================ */
+@theme inline {
+  /* Colors */
+  --color-primary: #006a6a;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #00ffff;
+  --color-on-primary-container: #007272;
+  --color-primary-fixed: #00fbfb;
+  --color-primary-fixed-dim: #00dddd;
+  --color-inverse-primary: #00dddd;
+  --color-on-primary-fixed: #002020;
+  --color-on-primary-fixed-variant: #004f4f;
+
+  --color-secondary: #a900a9;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #fe00fe;
+  --color-on-secondary-container: #500050;
+  --color-secondary-fixed: #ffd7f5;
+  --color-secondary-fixed-dim: #ffabf3;
+  --color-on-secondary-fixed: #380038;
+  --color-on-secondary-fixed-variant: #810081;
+
+  --color-tertiary: #626200;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #eded00;
+  --color-on-tertiary-container: #6a6a00;
+  --color-tertiary-fixed: #eaea00;
+  --color-tertiary-fixed-dim: #cdcd00;
+  --color-on-tertiary-fixed: #1d1d00;
+  --color-on-tertiary-fixed-variant: #494900;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-surface: #f9f9f9;
+  --color-surface-dim: #dadada;
+  --color-surface-bright: #f9f9f9;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f3f3;
+  --color-surface-container: #eeeeee;
+  --color-surface-container-high: #e8e8e8;
+  --color-surface-container-highest: #e2e2e2;
+  --color-surface-variant: #e2e2e2;
+  --color-surface-tint: #006a6a;
+  --color-on-surface: #1b1b1b;
+  --color-on-surface-variant: #3a4a49;
+  --color-inverse-surface: #303030;
+  --color-inverse-on-surface: #f1f1f1;
+
+  --color-background: #f9f9f9;
+  --color-on-background: #1b1b1b;
+  --color-outline: #6a7a7a;
+  --color-outline-variant: #b9cac9;
+
+  /* Fonts */
+  --font-bangers: 'Bangers', cursive;
+  --font-vietnam: 'Be Vietnam Pro', sans-serif;
+
+  /* Custom box shadows */
+  --shadow-comic: 8px 8px 0px 0px #1b1b1b;
+  --shadow-comic-sm: 4px 4px 0px 0px #1b1b1b;
+  --shadow-comic-lg: 12px 12px 0px 0px #1b1b1b;
+
+  /* Spacing extras */
+  --spacing-gutter: 24px;
+  --spacing-margin: 32px;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-vietnam);
+  background-image: radial-gradient(#6a7a7a 0.7px, transparent 0.7px);
+  background-size: 10px 10px;
+  background-attachment: fixed;
+}
+
+/* ============================================================
+   COMIC SYSTEM UTILITIES
+   ============================================================ */
+
+/* Comic border — 4px solid black, uneven radius for hand-drawn feel */
+.comic-border {
+  border: 4px solid #1b1b1b;
+  border-radius: 4px 8px 3px 10px;
+}
+
+/* Hard offset shadows — no blur */
+.comic-shadow {
+  box-shadow: 8px 8px 0px 0px #1b1b1b;
+}
+.comic-shadow-sm {
+  box-shadow: 4px 4px 0px 0px #1b1b1b;
+}
+.comic-shadow-lg {
+  box-shadow: 12px 12px 0px 0px #1b1b1b;
+}
+
+/* Button press interaction */
+.comic-btn {
+  transition: transform 75ms ease, box-shadow 75ms ease;
+  box-shadow: 8px 8px 0px 0px #1b1b1b;
+}
+.comic-btn:hover {
+  transform: translate(4px, 4px);
+  box-shadow: 4px 4px 0px 0px #1b1b1b;
+}
+.comic-btn:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0px 0px 0px 0px #1b1b1b;
+}
+
+/* Halftone backgrounds */
+.halftone-bg {
+  background-color: #ffffff;
+  background-image: radial-gradient(#b9cac9 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+}
+.halftone-bg-dark {
+  background-color: #f9f9f9;
+  background-image: radial-gradient(#1b1b1b 0.8px, transparent 0.8px);
+  background-size: 8px 8px;
+}
+.halftone-bg-yellow {
+  background-color: #eaea00;
+  background-image: radial-gradient(rgba(0,0,0,0.12) 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+}
+.halftone-bg-cyan {
+  background-color: #00fbfb;
+  background-image: radial-gradient(rgba(0,0,0,0.1) 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+}
+
+/* Starburst — 10-point explosion shape */
+.starburst {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* Speech bubble */
+.speech-bubble {
+  position: relative;
+  border: 4px solid #1b1b1b;
+  border-radius: 4px 8px 3px 10px;
+  background: #00fbfb;
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 24px;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 20px solid #1b1b1b;
+}
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 26px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 16px solid #00fbfb;
+  z-index: 1;
+}
+
+/* Text stroke for headlines */
+.text-stroke {
+  -webkit-text-stroke: 2px #1b1b1b;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Recharts custom styles */
+.recharts-tooltip-wrapper {
+  filter: none !important;
+}
+
+/* Range slider comic style */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: #e2e2e2;
+  border: 2px solid #1b1b1b;
+  border-radius: 0;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: #eaea00;
+  border: 3px solid #1b1b1b;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px 0px #1b1b1b;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: #eaea00;
+  border: 3px solid #1b1b1b;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px 0px #1b1b1b;
+}
+
+/* Select inputs */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231b1b1b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* Animation for BAM! result */
+@keyframes bamPop {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+  80% { transform: scale(0.95) rotate(-3deg); }
+  100% { transform: scale(1) rotate(5deg); opacity: 1; }
+}
+.bam-animate {
+  animation: bamPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.slide-up {
+  animation: slideUp 0.3s ease forwards;
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(2px);
+  background: rgba(27, 27, 27, 0.6);
+}
