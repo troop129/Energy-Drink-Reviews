@@ -36,15 +36,15 @@ function ComicBuilding(props: BuildingProps): ReactElement {
   const winW = Math.max(4, (width - border * 2 - winCols * 4) / winCols);
   const winH = Math.max(4, (height - 24 - border * 2 - winRows * 4) / winRows);
 
-  const windows: { wx: number; wy: number; lit: boolean }[] = [];
+  const windows: { wx: number; wy: number; lit: boolean; isTried: boolean }[] = [];
   let idx = 0;
   for (let r = 0; r < winRows; r++) {
     for (let c = 0; c < winCols; c++) {
-      if (idx >= total) break;
       windows.push({
         wx: x + border + c * (winW + 4) + 2,
         wy: y + border + 8 + r * (winH + 4) + 4,
         lit: idx < liked,
+        isTried: idx < total,
       });
       idx++;
     }
@@ -58,14 +58,14 @@ function ComicBuilding(props: BuildingProps): ReactElement {
       <rect x={x} y={y} width={width} height={8} fill="#1b1b1b" />
       {/* Outer border */}
       <rect x={x} y={y} width={width} height={height} fill="none" stroke="#1b1b1b" strokeWidth={border} />
-      {/* Windows: yellow=liked, dark=tried-not-liked */}
+      {/* Windows: yellow=liked, dark=tried-not-liked, very-dark=extra-filler */}
       {windows.map((w, i) => (
         <rect
           key={i}
           x={w.wx} y={w.wy}
           width={Math.max(2, winW)} height={Math.max(2, winH)}
           fill={w.lit ? '#eaea00' : '#1b1b1b'}
-          opacity={w.lit ? 1 : 0.22}
+          opacity={w.lit ? 1 : w.isTried ? 0.22 : 0.05}
           stroke="#1b1b1b" strokeWidth={0.5}
         />
       ))}

@@ -25,19 +25,53 @@ interface Props { reviews: Review[]; }
 
 const FLAVOR_CATEGORIES = ['All', 'Fruit', 'Berry', 'Tropical', 'Citrus', 'Candy', 'Dessert', 'Tea', 'Grape', 'Watermelon', 'Other'];
 const SORT_OPTIONS = [
-  { value: 'rating-desc', label: 'Rating ↓' },
-  { value: 'rating-asc', label: 'Rating ↑' },
+  { value: 'rating-desc', label: 'Rating (High to Low)' },
+  { value: 'rating-asc', label: 'Rating (Low to High)' },
   { value: 'name-asc', label: 'Name A–Z' },
-  { value: 'brand-asc', label: 'Brand' },
+  { value: 'brand-asc', label: 'Brand A-Z' },
+  { value: 'caffeine-desc', label: 'Highest Caffeine' },
+  { value: 'sweetness-desc', label: 'Sweetest' },
+  { value: 'tartness-desc', label: 'Most Tart' },
+  { value: 'refreshing-desc', label: 'Most Refreshing' },
+  { value: 'smoothness-desc', label: 'Smoothest' },
+];
+
+const CAFFEINE_OPTIONS = [
+  { value: 'all', label: 'All Caffeine' },
+  { value: 'high', label: 'High (150mg+)' },
+  { value: 'low', label: 'Low (<150mg)' },
+  { value: 'zero', label: 'Caffeine-Free' },
+];
+
+const RATING_OPTIONS = [
+  { value: '0', label: 'Any Rating' },
+  { value: '7', label: '7.0+ (Solid)' },
+  { value: '8', label: '8.0+ (Banger)' },
+  { value: '9', label: '9.0+ (God-Tier)' },
+];
+
+const TASTE_HIGHLIGHTS = [
+  { value: 'all', label: 'All Profiles' },
+  { value: 'refreshing', label: 'Refreshing (4+)' },
+  { value: 'smooth', label: 'Smooth (4+)' },
+  { value: 'low-artificial', label: 'Low Artificial' },
+  { value: 'high-carbonation', label: 'Very Fizzy' },
 ];
 
 export default function DatabaseClient({ reviews }: Props) {
   const [search, setSearch] = useState('');
   const [sugarFreeOnly, setSugarFreeOnly] = useState(false);
-  const [highCaffOnly, setHighCaffOnly] = useState(false);
+  const [caffeineFilter, setCaffeineFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('All');
+  const [minRating, setMinRating] = useState('0');
+  const [tasteFilter, setTasteFilter] = useState('all');
   const [flavorFilter, setFlavorFilter] = useState('All');
   const [sort, setSort] = useState('rating-desc');
   const [selectedDrink, setSelectedDrink] = useState<Review | null>(null);
+
+  const uniqueBrands = useMemo(() => {
+    return ['All', ...Array.from(new Set(reviews.map(r => r.brand)))].sort();
+  }, [reviews]);
 
   const filtered = useMemo(() => {
     let list = [...reviews];
@@ -50,7 +84,22 @@ export default function DatabaseClient({ reviews }: Props) {
       );
     }
     if (sugarFreeOnly) list = list.filter(r => r.sugar_free);
-    if (highCaffOnly) list = list.filter(r => r.caffeine_amount_mg >= 150);
+    
+    if (caffeineFilter === 'high') list = list.filter(r => r.caffeine_amount_mg >= 150);
+    else if (caffeineFilter === 'low') list = list.filter(r => r.caffeine_amount_mg < 150 && r.caffeine_amount_mg > 0);
+    else if (caffeineFilter === 'zero') list = list.filter(r => r.caffeine_amount_mg === 0);
+
+    if (brandFilter !== 'All') list = list.filter(r => r.brand === brandFilter);
+    
+    if (parseFloat(minRating) > 0) {
+      list = list.filter(r => r.rating >= parseFloat(minRating));
+    }
+
+    if (tasteFilter === 'refreshing') list = list.filter(r => r.refreshing_score >= 4);
+    else if (tasteFilter === 'smooth') list = list.filter(r => r.smoothness >= 4);
+    else if (tasteFilter === 'low-artificial') list = list.filter(r => r.artificial_sweetener_taste <= 2);
+    else if (tasteFilter === 'high-carbonation') list = list.filter(r => r.carbonation_level >= 4);
+
     if (flavorFilter !== 'All') {
       list = list.filter(r =>
         r.primary_flavor_category?.toLowerCase().includes(flavorFilter.toLowerCase()) ||
@@ -62,10 +111,15 @@ export default function DatabaseClient({ reviews }: Props) {
       if (sort === 'rating-asc') return a.rating - b.rating;
       if (sort === 'name-asc') return a.official_name.localeCompare(b.official_name);
       if (sort === 'brand-asc') return a.brand.localeCompare(b.brand);
+      if (sort === 'caffeine-desc') return b.caffeine_amount_mg - a.caffeine_amount_mg;
+      if (sort === 'sweetness-desc') return b.sweetness_level - a.sweetness_level;
+      if (sort === 'tartness-desc') return b.tartness_level - a.tartness_level;
+      if (sort === 'refreshing-desc') return b.refreshing_score - a.refreshing_score;
+      if (sort === 'smoothness-desc') return b.smoothness - a.smoothness;
       return 0;
     });
     return list;
-  }, [reviews, search, sugarFreeOnly, highCaffOnly, flavorFilter, sort]);
+  }, [reviews, search, sugarFreeOnly, caffeineFilter, brandFilter, minRating, tasteFilter, flavorFilter, sort]);
 
   return (
     <>
@@ -93,38 +147,74 @@ export default function DatabaseClient({ reviews }: Props) {
       </div>
 
       {/* Filters */}
-      <div className="mb-8 flex flex-wrap gap-3 items-center">
-        <span className="font-bangers text-2xl text-[#a900a9] tracking-wide">FILTERS:</span>
+      <div className="mb-8 flex flex-wrap gap-4 items-center bg-[#f3f3f3] p-4 comic-border">
+        <div className="flex items-center gap-2">
+          <span className="font-bangers text-2xl text-[#a900a9] tracking-wide">FILTERS:</span>
+          <button
+            onClick={() => setSugarFreeOnly(v => !v)}
+            className={`font-bangers text-lg px-4 py-2 comic-border comic-btn tracking-wider -rotate-1 ${sugarFreeOnly ? 'bg-[#00fbfb] text-black shadow-[4px_4px_0_0_#1b1b1b] translate-x-1 translate-y-1' : 'bg-[#00fbfb] text-black'}`}
+          >
+            SUGAR-FREE
+          </button>
+        </div>
 
-        <button
-          onClick={() => setSugarFreeOnly(v => !v)}
-          className={`font-bangers text-lg px-4 py-2 comic-border comic-btn tracking-wider -rotate-1 ${sugarFreeOnly ? 'bg-[#00fbfb] text-black shadow-[4px_4px_0_0_#1b1b1b] translate-x-1 translate-y-1' : 'bg-[#00fbfb] text-black'}`}
-        >
-          {sugarFreeOnly ? '' : ''} ZAP! SUGAR-FREE
-        </button>
+        <div className="flex flex-wrap gap-3">
+          {/* Brand Filter */}
+          <select
+            value={brandFilter}
+            onChange={e => setBrandFilter(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-white border-4 border-black tracking-wider rotate-1 focus:outline-none cursor-pointer"
+          >
+            {uniqueBrands.map(b => <option key={b} value={b}>{b === 'All' ? 'ALL BRANDS' : b.toUpperCase()}</option>)}
+          </select>
 
-        <button
-          onClick={() => setHighCaffOnly(v => !v)}
-          className={`font-bangers text-lg px-4 py-2 comic-border comic-btn tracking-wider rotate-1 ${highCaffOnly ? 'bg-[#fe00fe] text-white shadow-[4px_4px_0_0_#1b1b1b] translate-x-1 translate-y-1' : 'bg-[#fe00fe] text-white'}`}
-        >
-          {highCaffOnly ? '' : ''} POW! HIGH CAFFEINE (150mg+)
-        </button>
+          {/* Flavor Filter */}
+          <select
+            value={flavorFilter}
+            onChange={e => setFlavorFilter(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-[#eaea00] border-4 border-black tracking-wider -rotate-1 focus:outline-none cursor-pointer"
+          >
+            {FLAVOR_CATEGORIES.map(c => <option key={c} value={c}>{c === 'All' ? 'ALL FLAVORS' : c.toUpperCase()}</option>)}
+          </select>
 
-        <select
-          value={flavorFilter}
-          onChange={e => setFlavorFilter(e.target.value)}
-          className="font-bangers text-lg px-4 py-2 comic-border bg-[#eaea00] border-4 border-black tracking-wider -rotate-1 focus:outline-none cursor-pointer"
-        >
-          {FLAVOR_CATEGORIES.map(c => <option key={c} value={c}>BOOM! {c.toUpperCase()}</option>)}
-        </select>
+          {/* Caffeine Filter */}
+          <select
+            value={caffeineFilter}
+            onChange={e => setCaffeineFilter(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-[#fe00fe] text-white border-4 border-black tracking-wider rotate-1 focus:outline-none cursor-pointer"
+          >
+            {CAFFEINE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label.toUpperCase()}</option>)}
+          </select>
 
-        <select
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-          className="font-bangers text-lg px-4 py-2 comic-border bg-white border-4 border-black tracking-wider focus:outline-none cursor-pointer ml-auto"
-        >
-          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+          {/* Rating Filter */}
+          <select
+            value={minRating}
+            onChange={e => setMinRating(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-[#00fbfb] border-4 border-black tracking-wider -rotate-1 focus:outline-none cursor-pointer"
+          >
+            {RATING_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label.toUpperCase()}</option>)}
+          </select>
+
+          {/* Taste Filter */}
+          <select
+            value={tasteFilter}
+            onChange={e => setTasteFilter(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-white border-4 border-black tracking-wider rotate-1 focus:outline-none cursor-pointer"
+          >
+            {TASTE_HIGHLIGHTS.map(o => <option key={o.value} value={o.value}>{o.label.toUpperCase()}</option>)}
+          </select>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <span className="font-bangers text-xl tracking-wide">SORT:</span>
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="font-bangers text-lg px-4 py-2 comic-border bg-white border-4 border-black tracking-wider focus:outline-none cursor-pointer"
+          >
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Masonry Grid */}
